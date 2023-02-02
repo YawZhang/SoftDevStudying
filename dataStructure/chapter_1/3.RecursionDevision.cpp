@@ -56,4 +56,5 @@ int main()
     cout << "max1 = " << arr[max1] << endl;
     cout << "max2 = " << arr[max2] << endl;
     return 0;
+
 }

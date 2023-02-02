@@ -36,7 +36,12 @@ public:
     void traverse( void (* visit) ( T &)); // 函数指针实现遍历
     template<typename VST> void traverse(VST visit); // 函数对象实现遍历
     int disordered() const; // 判断序列是否为顺序排列
-    int uniquit
+    int uniquify_low(); // 低效版 有序序列去重
+    int uniquify(); // 高效版 有序序列去重
+    void bubbleSort_A(Rank lo, Rank hi); //冒泡排序算法（基本版）
+    void bubbleSort_B(Rank lo, Rank hi); //冒泡排序算法（改进版：提前终止版）
+    void bubbleSort_C(Rank lo, Rank hi); //冒泡排序算法（最终版）
+    void merge(Rank lo, Rank mi, Rank hi); //二路并归排序算法
 
 };
 
@@ -119,7 +124,8 @@ template <typename T>
 Rank Vector<T>::remove(Rank lo, Rank hi)
 {
     if(lo == hi) return -1; // 出于效率考虑，单独处理退化情况
-    while(hi<_size){_elem[lo++] = _elem[hi++];} // O(n-hi): [hi, n)顺次迁移
+    while(hi<_size){
+        _elem[lo++] = _elem[hi++];} // O(n-hi): [hi, n)顺次迁移
     _size = lo;;
     return hi-lo; // 返回删除元素数目
 }
@@ -202,6 +208,149 @@ int Vector<T>::disordered() const
 }
 
 /**********************************************
+ *  低效版 有序序列去重
+***********************************************/
+template <typename T>
+Rank Vector<T>::uniquify_low()
+{
+    Rank oldSize = _size, i=1;
+    while( i < _size ){
+        (_elem[i - 1] == _elem[i]) ? remove(i): i++;
+        }
+    return oldSize - _size;
+}
+
+/**********************************************
+ *  高效版 有序序列去重
+***********************************************/
+template <typename T>
+Rank Vector<T>::uniquify()
+{
+    Rank i=0, j=0; // 各对互异“相邻”元素的秩
+    while(++j<_size) // 逐一扫描
+    {
+        // 跳过雷同者;
+        if(_elem[i] != _elem[j]){
+            _elem[++i] = _elem[j]; //发现不同元素时，向前移至紧邻与前者右侧
+            } 
+    }
+    _size = ++i;
+    cout << "j=" << j  << "  i=" << i << endl;
+    return j-i; // 返回删除的元素个数
+}
+
+/**********************************************
+ *  二分查找（版本A):在有序的向量区间[lo, hi)内查找元素e，0 <= lo <= hi <=_size
+***********************************************/
+template <typename T>
+static Rank binSearch(T* S, T const& e, Rank lo, Rank hi){
+    while (lo < hi){  // 每步迭代做两次比较判断，有三个分支
+        Rank mi = (lo + hi) >> 1; // 以中点为轴,(区间宽度折半,等效于其数值表示的右移一位)
+        if (e < S[mi]) hi = mi; // 深入前半段[lo, mi)继续查找
+        else if (S[mi] > e) lo = mi; // 深入后半段[mi, hi)继续查找
+        else return mi; // 在mi处命中
+    } // 查找成功可以提前终止
+    return -1; // 查找失败
+} // 不足:有多个命中元素时,不能保证返回秩最大者;查找失败时,简单的返回-1,而不能提示失败的位置
+
+
+/**********************************************
+ *  二分查找（版本B):在有序的向量区间[lo, hi)内查找元素e，0 <= lo <= hi <=_size
+***********************************************/
+template <typename T> static Rank binSearch_B(T* S, T const& e, Rank lo, Rank hi){
+    while (1 < hi - lo){ // 每步迭代仅需做一次比较判断，有两个分支；成功查找不能提前终止
+        Rank mi = (lo + hi) >> 1; // 以中点为轴(区间宽度折半，等效于其数值表示的右移一位)
+        (e < S[mi]) ? hi = mi : lo = mi; // 经比较后确定深入[lo, mi)或[mi, hi)
+    }// 出口时hi= lo+1, 查找区间仅含一个元素A[lo]
+    return e < S[lo] ? lo - 1 : lo; // 返回位置，总是不超过e的最大者
+} // 有多个命中元素时, 返还秩的最大者; 查找失败时, 简单返回-1, 而不能指示失败的位置
+
+
+/**********************************************
+ *  二分查找（版本C):正确性，符合语义要求，返回秩的最大者
+***********************************************/
+template <typename T> static Rank binSearch_C(T* S, T const& e, Rank lo, Rank hi){
+    while (1 < hi - lo){ // 每步迭代仅需做一次比较判断，有两个分支；成功查找不能提前终止
+        Rank mi = (lo + hi) >> 1; // 以中点为轴(区间宽度折半，等效于其数值表示的右移一位)
+        (e < S[mi]) ? hi = mi : lo = mi + 1; // 经比较后确定深入[lo, mi)或(mi, hi)
+    }// 出口时hi= lo+1, 查找区间仅含一个元素A[lo]
+    return --lo;//至此，[lo]为大于e的最小者，故[lo-1]即为不大于e的最大者
+} // 有多个命中元素时, 返回最靠后者; 查找失败时, 简单返回失败的位置
+
+
+/**********************************************
+ *  向量的冒泡算法（基本版）
+***********************************************/ 
+template <typename T>
+void Vector<T>::bubbleSort_A(Rank lo, Rank hi){
+    while(lo < --hi){ // 反复冒泡扫描
+        for(Rank i = lo; i < hi; i++){ // 逐个检查相邻元素
+            if (_elem[i] > _elem[i + 1]){//若逆序
+                swap(_elem[i], _elem[i + 1]);// 经交换，局部有序
+            }
+        }
+    }
+}
+
+
+/**********************************************
+ *  向量的冒泡算法（提前终止版）
+***********************************************/ 
+template <typename T>
+void Vector<T>::bubbleSort_B(Rank lo, Rank hi){
+    for(bool sorted = false; sorted = !sorted; hi--){ // 反复冒泡扫描
+        for(Rank i = lo; i < hi; i++){ // 逐个检查相邻元素
+            if (_elem[i] > _elem[i + 1]){//若逆序
+                sorted = false;//意味尚未整体有序
+                swap(_elem[i], _elem[i + 1]);// 需要交换
+            }
+        }
+    }
+}
+
+
+/**********************************************
+ *  向量的冒泡算法（跳跃版）
+***********************************************/ 
+template <typename T>
+void Vector<T>::bubbleSort_C(Rank lo, Rank hi){
+    for(Rank last; lo < hi; hi = last){ // 反复冒泡扫描
+        for(Rank i = lo + 1, last = lo; i < hi; i++){ // 逐个检查相邻元素
+            if (_elem[i] > _elem[i + 1]){//若逆序
+                swap(_elem[i], _elem[(i + 1)]); // 则交换
+                last = i + 1; // 且记录最后交换的位置
+            }
+        }
+    }
+}
+
+
+/**********************************************
+ *  向量的二路并归排序算法（对各自的[lo, mi)和[mi, hi)进行排序, 此时B,C应为有序序列，用递归算法排序
+***********************************************/ 
+template <typename T>
+void Vector<T>::merge(Rank lo, Rank mi, Rank hi){
+    // 初始化子向量
+    Rank i = 0; T* A = _elem + lo;
+    Rank j = 0; lb = mi - lo; T* B = new T[lb];
+    for (Rank i = 0; i < lb; i++){
+        B[i] = A[i];
+    }
+    Rank k = 0; lc = hi - mi; T*C = _elem + mi;
+
+    // 开始归并
+    while((j < lb ) && (k < lc)){//反复比较B和C的首元素
+        A[i++] = (B[j++] <= C[k++]) ? B[j++] : C[k++];//小者优先归入A中
+    }
+    while(j<lb){//若C先耗尽，
+        A[i++] = B[j++];//将B残余的元素归入A中
+        //若B先耗尽，则后续元素不用再归并
+    }
+    delete[] B;
+}
+
+
+/**********************************************
  *  向量遍历打印算法
 ***********************************************/
 template<typename T>
@@ -231,20 +380,22 @@ void increase(Vector<T> &V)
 void test01()
 {
     Vector<int> myV(6);
-    for (int i=0; i<7; i++)
+    int index = 0;
+    for (int i=0; i<4; i++)
     {
-        Rank temp=0;
-        temp = myV.insert(i, i);
+        for (int j=0; j<5; j++)
+        {
+            Rank temp=0;
+            temp = myV.insert(index, i*3);
+            index++;
+        }
+        ;
     }
     printVector(myV);
-    // Rank ret = myV.remove(3);
-    // myV.insert(5, 2);
-    int sorded = myV.disordered();
-    if (sorded=0)
-    {
-        cout << "该向量为逆序" << endl;
-    }
-    else{cout << "该向量为顺序" << endl;}
+    int ret = myV.uniquify_low();
+    // int ret = myV.uniquify();
+    cout << "ret = " << ret << endl;
+    printVector(myV);
 
 }
 
