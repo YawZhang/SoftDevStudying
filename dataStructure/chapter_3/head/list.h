@@ -19,5 +19,6 @@ public:
 //析构函数
     ~List();//释放(包含头、尾哨兵在内的)所有节点
 //函数接头
-    T& operator [] (Rank r) const {};
+    T& operator [] (Rank r) const {};//重载[], 使List能以秩的方式进行访问元素
+    ListNodePosi(T) find(T const& e, int n, ListNodePosi(T) p) const{};//查找
 };
