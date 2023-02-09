@@ -1,8 +1,13 @@
 #include <iostream>
 using namespace std;
+#include "paren.h"
 
-int main()
-{
-    cout << "hello" << endl;
+
+int main(){
+
+    char c[] = {'(', '[', '{', '}', ']', ')'};
+    bool sss = paren(c, 0, 6);
+    cout << sss << endl;
+
     return 0;
 }

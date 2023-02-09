@@ -15,3 +15,4 @@ bool paren(const char exp[], int lo, int hi){
     }
     return S.empty(); //表达式扫描过后，栈中若仍存在(左)括号，则不匹配，否则(栈空)匹配
 }
+
