@@ -16,6 +16,8 @@ public:
     {
     _elem = new T[_capacity=c]; _size = 0;
     }// 默认构造
+    Vector ( Rank c = DEFAULT_CAPACITY, Rank s = 0, T v = 0 ) //容量为c、规模为s、所有元素初始为v
+    { _elem = new T[_capacity = c]; for ( _size = 0; _size < s; _elem[_size++] = v ); } //s<=c
     Vector( T const* A, Rank lo, Rank hi);// 数组区间复制
     Vector(Vector<T> const & V, Rank lo, Rank hi);// 向量区间复制    
     Vector(Vector<T> const* V);// 向量整体复制
@@ -29,6 +31,7 @@ public:
     // const T operator[](Rank r){return _elem[r];} // 只能作为右值 T x = V[r]
 
     Rank insert(Rank r, T const & e);// 向量插入算法
+    Rank insert ( T const& e ) { return insert ( _size, e ); } //默认作为末元素插入
     Rank remove(Rank lo, Rank hi);// 向量区间删除
     T remove(Rank r);//单元素删除，借助区间删除算法
     Rank find(T const &e, Rank lo, Rank hi) const;// 查找元素
