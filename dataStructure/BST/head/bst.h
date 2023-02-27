@@ -8,7 +8,7 @@ protected:
         BinNodePosi(T), BinNodePosi(T), BinNodePosi(T),
         BinNodePosi(T), BinNodePosi(T), BinNodePosi(T), BinNodePosi(T);
     )
-    BinNodePosi(T) rotateAt( BinNodeTree(T) x);//对x及其父亲，祖父做统一旋转调整
+    BinNodePosi(T) rotateAt( BinNodeTree(T) v);//对x及其父亲，祖父做统一旋转调整
 public:
     virtual BinNodePosi(T) & search( const T& e);//查找
     virtual BinNodePosi(T) insert( const T& e);//插入
